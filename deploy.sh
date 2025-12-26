@@ -6,8 +6,9 @@
 
 set -e
 
-# Get branch name from input or use default
+# Get parameters
 BRANCH_NAME="${1:-main}"
+ENV_PATH="$2"
 REPO_URL="https://github.com/bot28-b/rds-db-node.git"
 DEPLOY_DIR="/home/ubuntu/rds-app"
 CONTAINER_NAME="expense-tracker-app"
@@ -15,25 +16,37 @@ CONTAINER_NAME="expense-tracker-app"
 echo "=========================================="
 echo "Expense Tracker (RDS) - Auto Deployment"
 echo "=========================================="
-echo "Branch: $BRANCH_NAME"
+echo "Branch:   $BRANCH_NAME"
+
+# Step 1: Handle .env file
+if [ -z "$ENV_PATH" ]; then
+    echo ""
+    echo "❓ No .env path provided as second argument."
+    read -p "Please enter the full path to your .env file: " ENV_PATH
+fi
+
+if [ ! -f "$ENV_PATH" ]; then
+    echo "❌ Error: File '$ENV_PATH' not found."
+    exit 1
+fi
+
+echo "✓ Using .env from: $ENV_PATH"
 echo "=========================================="
 echo ""
 
-# Step 1: Install Docker if not already installed
+# Step 2: Install Docker if not already installed
 echo "[1/6] Checking Docker installation..."
 if ! command -v docker &> /dev/null; then
     echo "Installing Docker..."
     sudo apt-get update
     sudo apt-get install -y docker.io
     sudo usermod -aG docker ubuntu
-    # Note: newgrp might not work in a script as expected without a subshell, 
-    # but for manual execution it's fine.
 else
     echo "✓ Docker is already installed"
 fi
 echo ""
 
-# Step 2: Clone repository and checkout branch
+# Step 3: Clone repository and checkout branch
 echo "[2/6] Cloning repository from branch: $BRANCH_NAME..."
 if [ -d "$DEPLOY_DIR" ]; then
     echo "Removing existing deployment directory..."
@@ -41,29 +54,13 @@ if [ -d "$DEPLOY_DIR" ]; then
 fi
 mkdir -p "$DEPLOY_DIR"
 git clone -b "$BRANCH_NAME" "$REPO_URL" "$DEPLOY_DIR"
-if [ $? -ne 0 ]; then
-    echo "✗ Failed to clone branch '$BRANCH_NAME'. Checking available branches..."
-    git clone "$REPO_URL" "$DEPLOY_DIR"
-    cd "$DEPLOY_DIR"
-    echo "Available branches:"
-    git branch -r
-    echo "Please specify a valid branch name."
-    exit 1
-fi
-echo "✓ Repository cloned successfully"
+echo "✓ Repository cloned"
 echo ""
 
-# Step 3: Check for .env file
-echo "[3/6] Checking for environment configuration..."
-cd "$DEPLOY_DIR"
-if [ ! -f ".env" ]; then
-    echo "⚠️  WARNING: .env file not found!"
-    echo "Creating .env template from .env.example..."
-    cp .env.example .env
-    echo "Please edit $DEPLOY_DIR/.env with your RDS credentials before running manually."
-    echo "Continuing deployment using default template (container may fail until RDS is configured)."
-fi
-echo "✓ Environment configuration checked"
+# Step 4: Setup environment
+echo "[3/6] Configuring environment..."
+cp "$ENV_PATH" "$DEPLOY_DIR/.env"
+echo "✓ .env file copied to deployment directory"
 echo ""
 
 # Step 4: Stop existing container
