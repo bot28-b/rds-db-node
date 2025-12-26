@@ -1,0 +1,29 @@
+{
+    "name": "expense-tracker-rds",
+    "version": "1.0.0",
+    "description": "Expense Tracker & Budget Planner with PostgreSQL RDS",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "keywords": [
+        "nodejs",
+        "postgresql",
+        "rds",
+        "docker",
+        "expense-tracker"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.18.2",
+        "pg": "^8.11.3",
+        "dotenv": "^16.3.1",
+        "cors": "^2.8.5",
+        "body-parser": "^1.20.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}

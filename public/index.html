@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker & Budget Planner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">💰</span>
+          <h1>Expense Tracker</h1>
+        </div>
+        <div class="header-stats" id="headerStats">
+          <div class="stat-card">
+            <span class="stat-label">Income</span>
+            <span class="stat-value income" id="totalIncome">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Expenses</span>
+            <span class="stat-value expense" id="totalExpenses">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Balance</span>
+            <span class="stat-value" id="balance">$0</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="tab-btn" data-tab="transactions">💸 Transactions</button>
+      <button class="tab-btn" data-tab="budgets">🎯 Budgets</button>
+      <button class="tab-btn" data-tab="analytics">📈 Analytics</button>
+      <button class="tab-btn" data-tab="query">🔍 SQL Query</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Tab -->
+      <div class="tab-content active" id="dashboard">
+        <div class="dashboard-grid">
+          <div class="card chart-card">
+            <h3>Spending by Category</h3>
+            <canvas id="categoryChart"></canvas>
+          </div>
+          <div class="card chart-card">
+            <h3>Income vs Expenses Trend</h3>
+            <canvas id="trendChart"></canvas>
+          </div>
+          <div class="card">
+            <h3>Recent Transactions</h3>
+            <div id="recentTransactions" class="transaction-list"></div>
+          </div>
+          <div class="card">
+            <h3>Budget Overview</h3>
+            <div id="budgetOverview" class="budget-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions Tab -->
+      <div class="tab-content" id="transactions">
+        <div class="actions-bar">
+          <button class="btn btn-primary" id="addTransactionBtn">+ Add Transaction</button>
+          <div class="filters">
+            <select id="typeFilter" class="filter-select">
+              <option value="">All Types</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+            <select id="categoryFilter" class="filter-select">
+              <option value="">All Categories</option>
+            </select>
+            <input type="date" id="startDateFilter" class="filter-input">
+            <input type="date" id="endDateFilter" class="filter-input">
+            <button class="btn btn-secondary" id="applyFilters">Apply Filters</button>
+          </div>
+        </div>
+        <div class="card">
+          <div id="transactionsList" class="transaction-list"></div>
+        </div>
+      </div>
+
+      <!-- Budgets Tab -->
+      <div class="tab-content" id="budgets">
+        <div class="actions-bar">
+          <button class="btn btn-primary" id="addBudgetBtn">+ Create Budget</button>
+        </div>
+        <div id="budgetsList" class="budgets-grid"></div>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div class="tab-content" id="analytics">
+        <div class="analytics-grid">
+          <div class="card">
+            <h3>Monthly Summary</h3>
+            <div id="monthlySummary"></div>
+          </div>
+          <div class="card chart-card">
+            <h3>Category Breakdown</h3>
+            <canvas id="analyticsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- SQL Query Tab -->
+      <div class="tab-content" id="query">
+        <div class="card">
+          <h3>Custom SQL Query Executor</h3>
+          <p class="query-info">⚠️ Only SELECT queries are allowed for security</p>
+          <div class="query-examples">
+            <h4>Example Queries:</h4>
+            <button class="example-btn" data-query="SELECT * FROM transactions ORDER BY transaction_date DESC LIMIT 10">Recent 10 Transactions</button>
+            <button class="example-btn" data-query="SELECT c.name, COUNT(*) as count, SUM(t.amount) as total FROM transactions t JOIN categories c ON t.category_id = c.id GROUP BY c.name ORDER BY total DESC">Total by Category</button>
+            <button class="example-btn" data-query="SELECT TO_CHAR(transaction_date, 'YYYY-MM') as month, SUM(amount) as total FROM transactions WHERE type = 'expense' GROUP BY month ORDER BY month DESC">Monthly Expenses</button>
+            <button class="example-btn" data-query="SELECT * FROM budgets b JOIN categories c ON b.category_id = c.id">All Budgets with Categories</button>
+          </div>
+          <textarea id="sqlQuery" class="sql-input" placeholder="Enter your SELECT query here..."></textarea>
+          <button class="btn btn-primary" id="executeQuery">Execute Query</button>
+          <div id="queryResults" class="query-results"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="transactionModalTitle">Add Transaction</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <form id="transactionForm">
+          <input type="hidden" id="transactionId">
+          <div class="form-group">
+            <label>Type</label>
+            <select id="transactionType" required>
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="transactionAmount" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="transactionCategory" required></select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="transactionDate" required>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="transactionDescription" rows="3"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Budget Modal -->
+    <div id="budgetModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create Budget</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <form id="budgetForm">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="budgetCategory" required></select>
+          </div>
+          <div class="form-group">
+            <label>Budget Amount</label>
+            <input type="number" id="budgetAmount" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Period</label>
+            <select id="budgetPeriod" required>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="budgetStartDate" required>
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" id="budgetEndDate" required>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Budget</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
